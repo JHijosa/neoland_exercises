@@ -1,6 +1,8 @@
 const express = require("express");
 const fs = require("fs");
 const bodyParser = require("body-parser");
+const mongoose = require("mongoose");
+const Pokemons = require("./models/pokemons");
 
 const api = express();
 
@@ -30,61 +32,42 @@ api.use((req, res, next) => {
 api.use(bodyParser.json());
 api.use(bodyParser.urlencoded({ extended: true })); //Decodificamos la informacion del body
 
+// Realizo la conexión con la BBDD
+mongoose.connect(
+    "mongodb://localhost/pokemonsDB", { useNewUrlParser: true, useUnifiedTopology: true },
+    (err, res) => {
+        if (err) console.err(err, "Error al conectar con la BBDD");
+        else console.log("pokemonsDB conectada");
+    }
+);
+
 // GET
 api.get("/api/pokemons", (request, response) => {
-    fs.readFile("db/dbPokemon.json", (err, data) => {
-        if (err) throw err; //Elevar o notificar una excepcion
-        const allPokemon = JSON.parse(data); // Parseamos el contenido del fichero a formato JSON
-        response.status(200).send({
-            success: true,
-            message: "/api/pokemons",
-            method: "GET",
-            pokemons: allPokemon,
-        });
+    Pokemons.find((err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            response.send(data);
+        }
     });
 });
 
 // POST por parametros "api/pokemons?name=pikachu&type=electrico"
 api.post("/api/pokemons", (request, response) => {
-    if (!request.body.name || !request.body.type) {
-        response.status(400).send({
-            success: false,
-            url: "/api/pokemons",
-            method: "POST",
-            message: "name and type is required",
-        });
-    } else {
-        fs.readFile("db/dbPokemon.json", (err, data) => {
-            if (err) throw err;
-            const allPokemon = JSON.parse(data);
-            let newPokemon = {
-                id: allPokemon.length + 1,
-                name: request.body.name,
-                type: request.body.type,
-            };
-            allPokemon.push(newPokemon);
+    const newPokemon = new Pokemons({
+        name: request.body.name,
+        type: request.body.type,
+    });
 
-            fs.writeFile("db/dbPokemon.json", JSON.stringify(allPokemon), (err) => {
-                if (err) {
-                    response.status(400).send({
-                        success: false,
-                        url: "/api/pokemons",
-                        method: "POST",
-                        message: "fallo al añadir el pokemon",
-                        err: err,
-                    });
-                } else {
-                    response.status(201).send({
-                        success: true,
-                        url: "/api/pokemons",
-                        method: "POST",
-                        message: "Pokemon añadido correctamente",
-                        newPokemon: newPokemon,
-                    });
-                }
+    newPokemon.save((err) => {
+        if (err) console.error(err);
+        else
+            response.send({
+                success: true,
+                message: "pokemon añadido correctamente",
+                newPokemon,
             });
-        });
-    }
+    });
 });
 
 // DELETE
