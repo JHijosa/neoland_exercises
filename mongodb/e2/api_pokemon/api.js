@@ -124,100 +124,21 @@ api.put("/api/pokemons/:id", (request, response) => {
     );
 });
 
-// PAGINADO POR PARAMS
-
-api.get("/api/pokemons/page/:page", (request, response) => {
-    fs.readFile("db/dbPokemon.json", (err, data) => {
-        if (err) throw err; //Elevar o notificar una excepcion
-        const allPokemon = JSON.parse(data); // Parseamos el contenido del fichero a formato JSON
-        const PAGE_SIZE = 5;
-        const page = request.params.page;
-        const initPage = Math.abs(page) * PAGE_SIZE - PAGE_SIZE;
-        const endPage = Math.abs(page) * PAGE_SIZE;
-
-        const pagePokemon = allPokemon.slice(initPage, endPage);
-
-        const totalPages = Math.ceil(allPokemon.length / PAGE_SIZE);
-
-        response.status(200).send({
-            success: true,
-            message: "/api/pokemons",
-            method: "GET",
-            totalPages: totalPages,
-            page: page,
-            pagePokemon: pagePokemon,
-        });
-    });
-});
-
 // PAGINADO CON LIMIT Y OFFSET
 
 api.get("/api/pokemon/pageoffset", (request, response) => {
-    fs.readFile("db/dbPokemon.json", (err, data) => {
-        if (err) throw err; //Elevar o notificar una excepcion
-        const allPokemon = JSON.parse(data); // Parseamos el contenido del fichero a formato JSON
-        const limit = Number.parseInt(request.query.limit);
-        const offset = Number.parseInt(request.query.offset);
+    const limit = Number.parseInt(request.query.limit);
+    const offset = Number.parseInt(request.query.offset);
 
-        const pagePokemon = allPokemon.slice(offset, offset + limit);
-
-        response.status(200).send({
-            success: true,
-            message: "/api/pokemons",
-            method: "GET",
-            pagePokemon: pagePokemon,
-        });
-    });
-});
-
-// LOCATION
-
-api.get("/api/pokemons/:id/locations/:locationId", (request, response) => {
-    fs.readFile("db/dbPokemon.json", (err, data) => {
-        if (err) throw err;
-        const allPokemon = JSON.parse(data);
-
-        if (request.params.id > allPokemon.length) {
-            response.status(400).send({
-                success: false,
-                method: "GET",
-                message: "Pokemon not found",
-            });
-        } else {
-            const onePokemon = {
-                id: Number.parseInt(request.params.id),
-            };
-
-            const searchPokemon = allPokemon.find(
-                (pokemon) => pokemon.id === onePokemon.id
-            );
-            // puedo hacer aqui el if en el caso de que searchPokemon sea undefined.
-            const locationPokemon = searchPokemon.locations;
-
-            if (request.params.locationId > locationPokemon.length) {
-                response.status(400).send({
-                    success: false,
-                    method: "GET",
-                    message: "Location not found",
-                });
+    Pokemons.find((err, data) => {
+            if (err) {
+                console.error(err);
             } else {
-                const oneLocation = {
-                    id: Number.parseInt(request.params.locationId),
-                };
-
-                const searchLocation = locationPokemon.find(
-                    (location) => location.id === oneLocation.id
-                );
-
-                response.status(200).send({
-                    success: true,
-                    message: "/api/pokemons",
-                    method: "GET",
-                    location: searchLocation,
-                });
+                response.send(data);
             }
-        }
-    });
+        })
+        .skip(offset)
+        .limit(limit);
 });
 
 api.listen(1010, () => {
