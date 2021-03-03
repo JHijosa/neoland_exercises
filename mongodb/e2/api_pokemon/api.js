@@ -118,67 +118,27 @@ api.delete("/api/pokemons", (request, response) => {
     }
 });
 
-// GET ONE
-api.get("/api/onepokemon", (request, response) => {
-    if (!request.query.id) {
-        response.status(400).send({
-            success: false,
-            url: "/api/onepokemons",
-            method: "GET",
-            message: "id is requied",
-        });
-    } else {
-        fs.readFile("db/dbPokemon.json", (err, data) => {
-            if (err) throw err; //Elevar o notificar una excepcion
-            const allPokemon = JSON.parse(data); // Parseamos el contenido del fichero a formato JSON
-            const onePokemon = {
-                id: Number.parseInt(request.query.id),
-            };
-
-            const searchPokemon = allPokemon.find(
-                (pokemon) => pokemon.id === onePokemon.id
-            );
-
-            response.status(200).send({
-                success: true,
-                message: "/api/pokemons",
-                method: "GET",
-                pokemon: searchPokemon,
-            });
-        });
-    }
+// GET ONE por nombre
+api.get("/api/pokemon/name/:name", (request, response) => {
+    Pokemons.findOne({ name: request.params.name }, (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            response.send(data);
+        }
+    });
 });
 
-// GET ONE POR PARAMS
+// GET ONE por ID
 
 api.get("/api/pokemons/:id", (request, response) => {
-    if (!request.params) {
-        response.status(400).send({
-            success: false,
-            url: "/api/onepokemons",
-            method: "GET",
-            message: "id is requied",
-        });
-    } else {
-        fs.readFile("db/dbPokemon.json", (err, data) => {
-            if (err) throw err; //Elevar o notificar una excepcion
-            const allPokemon = JSON.parse(data); // Parseamos el contenido del fichero a formato JSON
-            const onePokemon = {
-                id: Number.parseInt(request.params.id),
-            };
-
-            const searchPokemon = allPokemon.filter(
-                (pokemon) => pokemon.id === onePokemon.id
-            );
-
-            response.status(200).send({
-                success: true,
-                message: "/api/pokemons",
-                method: "GET",
-                searchPokemon: searchPokemon,
-            });
-        });
-    }
+    Pokemons.findById(request.params.id, (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            response.send(data);
+        }
+    });
 });
 
 // PUT
