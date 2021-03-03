@@ -70,54 +70,6 @@ api.post("/api/pokemons", (request, response) => {
     });
 });
 
-// DELETE
-
-api.delete("/api/pokemons", (request, response) => {
-    if (!request.body.id) {
-        response.status(400).send({
-            success: false,
-            url: "/api/pokemons",
-            method: "DELETE",
-            message: "id is requied",
-        });
-    } else {
-        fs.readFile("db/dbPokemon.json", (err, data) => {
-            if (err) throw err;
-            const allPokemon = JSON.parse(data);
-            const deletePokemon = {
-                id: Number.parseInt(request.body.id),
-            };
-            const newAllPokemon = allPokemon.filter(
-                (pokemon) => pokemon.id !== deletePokemon.id
-            );
-
-            fs.writeFile(
-                "db/dbPokemon.json",
-                JSON.stringify(newAllPokemon),
-                (err) => {
-                    if (err) {
-                        response.status(400).send({
-                            success: false,
-                            url: "/api/pokemons",
-                            method: "DELETE",
-                            message: "fallo al eliminar el pokemon",
-                            err: err,
-                        });
-                    } else {
-                        response.status(201).send({
-                            success: true,
-                            url: "/api/pokemons",
-                            method: "DELETE",
-                            message: "Pokemon eliminado correctamente",
-                            deletePokemon: deletePokemon,
-                        });
-                    }
-                }
-            );
-        });
-    }
-});
-
 // GET ONE por nombre
 api.get("/api/pokemon/name/:name", (request, response) => {
     Pokemons.findOne({ name: request.params.name }, (err, data) => {
@@ -141,46 +93,35 @@ api.get("/api/pokemons/:id", (request, response) => {
     });
 });
 
+// DELETE
+
+api.delete("/api/pokemons/:name", (request, response) => {
+    Pokemons.remove({ name: request.params.name }, (err, data) => {
+        if (err) {
+            console.error(err);
+        } else {
+            response.send({
+                success: true,
+                message: "pokemon eliminado correctamente",
+            });
+        }
+    });
+});
+
 // PUT
 
 api.put("/api/pokemons/:id", (request, response) => {
-    fs.readFile("db/dbPokemon.json", (err, data) => {
-        if (err) throw err;
-        const allPokemonUpdate = JSON.parse(data);
-        allPokemonUpdate.forEach((pokemon) => {
-            if (pokemon.id === Number.parseInt(request.params.id)) {
-                // if (request.body.type) {
-                //     pokemon.type = request.body.type;
-                // }
-                pokemon.type = request.body.type ? request.body.type : pokemon.type;
-                pokemon.name = request.body.name ? request.body.name : pokemon.name;
-            }
-        });
-
-        fs.writeFile(
-            "db/dbPokemon.json",
-            JSON.stringify(allPokemonUpdate),
-            (err) => {
-                if (err) {
-                    response.status(400).send({
-                        success: false,
-                        url: "/api/pokemons",
-                        method: "PUT",
-                        message: "fallo al modificar el pokemon",
-                        err: err,
-                    });
-                } else {
-                    response.status(201).send({
-                        success: true,
-                        url: "/api/pokemons",
-                        method: "PUT",
-                        message: "Pokemon modificado correctamente",
-                        allPokemonUpdate: allPokemonUpdate,
-                    });
-                }
-            }
-        );
-    });
+    Pokemons.findByIdAndUpdate(
+        request.params.id, { $set: request.body },
+        (err, data) => {
+            if (err) return response.status(500).send(err.message);
+            response.status(201).send({
+                success: "true",
+                message: "Pokemon actualizado",
+                fruta: data,
+            });
+        }
+    );
 });
 
 // PAGINADO POR PARAMS
