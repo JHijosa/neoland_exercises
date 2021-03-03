@@ -3,6 +3,7 @@ const fs = require("fs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const Pokemons = require("./models/pokemons");
+const { get } = require("http");
 
 const api = express();
 
@@ -47,7 +48,12 @@ api.get("/api/pokemons", (request, response) => {
         if (err) {
             console.error(err);
         } else {
-            response.send(data);
+            response.send({
+                success: true,
+                method: "GET",
+                URL: "/api/pokemons",
+                pokemons: data,
+            });
         }
     });
 });
@@ -126,7 +132,7 @@ api.put("/api/pokemons/:id", (request, response) => {
 
 // PAGINADO CON LIMIT Y OFFSET
 
-api.get("/api/pokemon/pageoffset", (request, response) => {
+api.get("/api/pokemons/pageoffset", (request, response) => {
     const limit = Number.parseInt(request.query.limit);
     const offset = Number.parseInt(request.query.offset);
 
@@ -134,7 +140,11 @@ api.get("/api/pokemon/pageoffset", (request, response) => {
             if (err) {
                 console.error(err);
             } else {
-                response.send(data);
+                response.send({
+                    success: true,
+                    message: "pokemon añadido correctamente",
+                    pagePokemon,
+                });
             }
         })
         .skip(offset)
